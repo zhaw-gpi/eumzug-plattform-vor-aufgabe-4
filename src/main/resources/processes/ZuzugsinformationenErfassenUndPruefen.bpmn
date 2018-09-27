@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_131vro7" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.16.2">
+  <bpmn:collaboration id="Collaboration_1o68a8d">
+    <bpmn:participant id="ZuzugsinformationenErfassenUndPruefenParticipant" name="Zuzugsinformationen erfassen und prüfen" processRef="ZuzugsinformationenErfassenUndPruefen" />
+    <bpmn:participant id="GebaeudeUndWohnungsregister" name="Gebäude- und Wohnungsregister">
+      <bpmn:documentation>Das Gebäude- und Wohnungsregister (GWR) des Bundes ist über einen SOAP-Web Service zugreifbar.</bpmn:documentation>
+    </bpmn:participant>
+    <bpmn:messageFlow id="Zuzugsadresse" name="Zuzugs-&#10;adresse" sourceRef="WohnungenAnZuzugsadresseBestimmen" targetRef="GebaeudeUndWohnungsregister">
+      <bpmn:documentation>Adresse (Attribute nach GWR-Merkmalskatalog S. 81 ff. und 110):
+- Eingangsnummer Gebäude (DEINR entspricht houseNumber nach eCH)
+- PLZ (DPLZ4 entspricht swissZipCode)
+- Strassenbezeichnung (STRNAME entspricht street)</bpmn:documentation>
+    </bpmn:messageFlow>
+    <bpmn:messageFlow id="Wohnungen" name="Wohnungen" sourceRef="GebaeudeUndWohnungsregister" targetRef="WohnungenAnZuzugsadresseBestimmen">
+      <bpmn:documentation>Meldung vom Typ WohnungenAntwortType, welche null oder eine Liste von WohnungType enthält.</bpmn:documentation>
+    </bpmn:messageFlow>
+  </bpmn:collaboration>
+  <bpmn:process id="ZuzugsinformationenErfassenUndPruefen" name="ZuzugsinformationenErfassenUndPruefen" isExecutable="true">
+    <bpmn:startEvent id="WegzugsadressPruefungErfolgreichAbgeschlossen" name="Wegzugsadress-prüfung erfolgreich abgeschlossen">
+      <bpmn:documentation>In einem End-Listener wird eine Zählervariable adresseUngueltigZaehler mit 0 initialisiert, welche verwendet wird, um zu zählen, wie oft der Benutzer eine ungültige Adresse erfasst hat.
+
+Ein End-Listener ruft die JavaDelegate-Klasse 'GetMunicipalityListDelegate' auf mit folgender Aufgabe: Serialisierte Prozessvariable municipalityList mit allen Gemeinden in der Umzugsplattform-Datenbank erstellen
+
+Über ein JPA-Repository sollen alle Municipality-Objekte aus der Datenbank in ein List-Objekt eingelesen werden. Diese Objekte werden mittels Camunda Spin in ein JSON-Objekt serialisiert und der Prozessvariable municipalityList zugewiesen.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:executionListener event="end">
+          <camunda:script scriptFormat="JavaScript">// Variable adresseUngueltigZaehler mit dem Wert 0 initiieren
+execution.setVariable("adresseUngueltigZaehler", 0);</camunda:script>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>SequenceFlow_0gby9vq</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_02h6ni7">
+      <bpmn:incoming>SequenceFlow_0gby9vq</bpmn:incoming>
+      <bpmn:incoming>NichtMindestensEineWohnungGefunden</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0fooiee</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_02hjo1y" name="Mindestens eine Wohnung gefunden?">
+      <bpmn:incoming>SequenceFlow_04ncg2b</bpmn:incoming>
+      <bpmn:outgoing>NichtMindestensEineWohnungGefunden</bpmn:outgoing>
+      <bpmn:outgoing>MindestensEineWohnungGefunden</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_0gby9vq" sourceRef="WegzugsadressPruefungErfolgreichAbgeschlossen" targetRef="ExclusiveGateway_02h6ni7" />
+    <bpmn:sequenceFlow id="NichtMindestensEineWohnungGefunden" name="nein" sourceRef="ExclusiveGateway_02hjo1y" targetRef="ExclusiveGateway_02h6ni7">
+      <bpmn:documentation>In einem Take-Listener wird die Zählervariable adresseUngueltigZaehler um 1 erhöht, um zu zählen, wie oft der Benutzer eine ungültige Adresse erfasst hat.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:executionListener event="take">
+          <camunda:script scriptFormat="JavaScript">// Bestehende Variable adresseUngueltigZaehler auslesen
+adresseUngueltigZaehler = execution.getVariable("adresseUngueltigZaehler");
+
+// Bestehende Variable überschreiben mit einem um 1 erhöhten Wert
+execution.setVariable("adresseUngueltigZaehler", adresseUngueltigZaehler + 1);</camunda:script>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!wohnungenGefunden}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_0fooiee" sourceRef="ExclusiveGateway_02h6ni7" targetRef="ZuzugsadresseErfassen" />
+    <bpmn:sequenceFlow id="SequenceFlow_1n0ru7f" sourceRef="ZuzugsadresseErfassen" targetRef="WohnungenAnZuzugsadresseBestimmen" />
+    <bpmn:sequenceFlow id="SequenceFlow_04ncg2b" sourceRef="WohnungenAnZuzugsadresseBestimmen" targetRef="ExclusiveGateway_02hjo1y" />
+    <bpmn:sequenceFlow id="MindestensEineWohnungGefunden" name="ja" sourceRef="ExclusiveGateway_02hjo1y" targetRef="WohnungAnZuzugsadresseAuswaehlen">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${wohnungenGefunden}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ZuzugsInformationenErfolgreichGeprueft" name="Zuzugs-Informationen erfolgreich geprüft">
+      <bpmn:incoming>SequenceFlow_0sag684</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0sag684" sourceRef="WohnungAnZuzugsadresseAuswaehlen" targetRef="ZuzugsInformationenErfolgreichGeprueft" />
+    <bpmn:task id="ZuzugsadresseErfassen" name="Zuzugsadresse erfassen">
+      <bpmn:documentation>Zuzugsadresse Strasse
+  eCH-0010:streetMoveIn (Achtung bei diesen und weiteren Attributen, die es sowohl bei Wegzug als auch Zuzug gibt: Es wurde an die eCH-Bezeichnung jeweils noch MoveIn angehängt)
+  String
+  input text (max. 60 Zeichen, Pflicht)
+Zuzugsadresse Hausnummer (optional)
+  eCH-0010:houseNumberMoveIn
+  String
+  input text (max. 12 Zeichen)
+Zuzugsadresse PLZ
+  eCH-0010:swissZipCodeMoveIn
+  Integer
+  input number (0-9999, Pflicht)
+Zuzugsadresse Ort
+  eCH-0010:townMoveIn
+  String
+  input text (max. 40 Zeichen, Pflicht)
+Zuzugsadresse Politische Gemeinde
+  eCH-0007:municipalityIdMoveIn
+  Integer
+  select (basierend auf municipalityList, wobei municipalityName angezeigt wird)</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_0fooiee</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1n0ru7f</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="WohnungAnZuzugsadresseAuswaehlen" name="Wohnung an Zuzugsadresse auswählen">
+      <bpmn:documentation>Wohnung
+  eCH-0010:apartmentMoveIn
+  String
+  select (basierend auf wohnungenList, wobei whgnr angezeigt wird)</bpmn:documentation>
+      <bpmn:incoming>MindestensEineWohnungGefunden</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0sag684</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="WohnungenAnZuzugsadresseBestimmen" name="Wohnungen an Zuzugsadresse bestimmen">
+      <bpmn:documentation>Überprüfen, ob für die angegebene Zuzugsadresse Wohnungen im GWR vorhanden sind
+
+Die Operation wohnungenInGebaeudeOperation des Gebäude- und Wohnungsregister-Web Service wird synchron aufgerufen.
+
+Der Web Service-Client wird mit org.springframework.ws.client implementiert, Das Marshalling und Unmarshalling über org.springframework.oxm.jaxb.
+
+Für den Request an den Web Service müssen die Prozessvariablen houseNumberMoveIn, swissZipCodeMoveIn und streetMoveIn den passenden Eigenschaften der AddresseType-Klasse zugewiesen werden.
+
+Die Response ist vom Typ WohnungenAntwortType. Die darin enthaltene Methode getWohnungenAntwort() liefert eine Liste von verfügbaren Wohnungen zurück. Diese Liste wird mit Camunda Spin serialisiert und der Prozessvariable wohnungenList übergeben. Zudem wird die Prozessvariable wohnungenGefunden indirekt generiert.</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_1n0ru7f</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_04ncg2b</bpmn:outgoing>
+    </bpmn:task>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1o68a8d">
+      <bpmndi:BPMNShape id="Participant_1t0xf0u_di" bpmnElement="ZuzugsinformationenErfassenUndPruefenParticipant">
+        <dc:Bounds x="0" y="132" width="938" height="243" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="WegzugsadressPruefungErfolgreichAbgeschlossen" bioc:stroke="#E53935" bioc:fill="#FFCDD2">
+        <dc:Bounds x="71" y="234" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="49" y="277" width="82" height="53" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_02h6ni7_di" bpmnElement="ExclusiveGateway_02h6ni7" isMarkerVisible="true">
+        <dc:Bounds x="162" y="227" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0gby9vq_di" bpmnElement="SequenceFlow_0gby9vq">
+        <di:waypoint x="107" y="252" />
+        <di:waypoint x="162" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0fooiee_di" bpmnElement="SequenceFlow_0fooiee">
+        <di:waypoint x="212" y="252" />
+        <di:waypoint x="272" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_02hjo1y_di" bpmnElement="ExclusiveGateway_02hjo1y" isMarkerVisible="true">
+        <dc:Bounds x="592" y="227" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="576" y="182" width="81" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_04ncg2b_di" bpmnElement="SequenceFlow_04ncg2b">
+        <di:waypoint x="532" y="252" />
+        <di:waypoint x="592" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1n0ru7f_di" bpmnElement="SequenceFlow_1n0ru7f">
+        <di:waypoint x="372" y="252" />
+        <di:waypoint x="432" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1xdg697_di" bpmnElement="NichtMindestensEineWohnungGefunden">
+        <di:waypoint x="617" y="277" />
+        <di:waypoint x="617" y="321" />
+        <di:waypoint x="187" y="321" />
+        <di:waypoint x="187" y="277" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="628" y="284" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0mal49f_di" bpmnElement="ZuzugsInformationenErfolgreichGeprueft">
+        <dc:Bounds x="854" y="234" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="828" y="277" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1kd2mjt_di" bpmnElement="MindestensEineWohnungGefunden">
+        <di:waypoint x="642" y="252" />
+        <di:waypoint x="704" y="252" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="652" y="231" width="8" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_0yqqcl4_di" bpmnElement="GebaeudeUndWohnungsregister" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="333" y="-1" width="300" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="MessageFlow_1g54841_di" bpmnElement="Zuzugsadresse" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <di:waypoint x="468" y="212" />
+        <di:waypoint x="468" y="59" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="410" y="83" width="40" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_05ay0wk_di" bpmnElement="Wohnungen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <di:waypoint x="497" y="59" />
+        <di:waypoint x="497" y="212" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="505" y="84" width="59" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0sag684_di" bpmnElement="SequenceFlow_0sag684">
+        <di:waypoint x="804" y="252" />
+        <di:waypoint x="854" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_1hg3qrk_di" bpmnElement="ZuzugsadresseErfassen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="272" y="212" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_1i0j8hy_di" bpmnElement="WohnungAnZuzugsadresseAuswaehlen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="704" y="212" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_1ayw0q9_di" bpmnElement="WohnungenAnZuzugsadresseBestimmen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="432" y="212" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

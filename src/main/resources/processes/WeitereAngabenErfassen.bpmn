@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1t06bdh" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.16.2">
+  <bpmn:collaboration id="Collaboration_1p945p5">
+    <bpmn:participant id="WeitereAngabenErfassenParticipant" name="Weitere Angaben erfassen" processRef="WeitereAngabenErfassen" />
+    <bpmn:participant id="VeKaCenterAuskunftsdienstParticipant" name="VeKa-Center-Auskunftsdienst" />
+    <bpmn:messageFlow id="VersichertenDaten" name="Versicherten-Daten&#10;" sourceRef="GrundversicherungPruefen" targetRef="VeKaCenterAuskunftsdienstParticipant">
+      <bpmn:documentation>baseInsuranceNumber, firstName, officialName, dateOfBirth</bpmn:documentation>
+    </bpmn:messageFlow>
+    <bpmn:messageFlow id="Pruefergebnis" name="Prüfergebnis" sourceRef="VeKaCenterAuskunftsdienstParticipant" targetRef="GrundversicherungPruefen">
+      <bpmn:documentation>checkBaseInsuranceResult und checkBaseInsuranceResultDetails</bpmn:documentation>
+    </bpmn:messageFlow>
+  </bpmn:collaboration>
+  <bpmn:process id="WeitereAngabenErfassen" name="WeitereAngabenErfassen" isExecutable="true">
+    <bpmn:task id="UmzugsdatenErfassen" name="Umzugsdaten erfassen">
+      <bpmn:documentation>Wegzugsdatum
+  eCH-0194:departureDate
+  Date
+  input text (ISO-DateTime-Format, Pflicht)
+  Auswahl des Datums über Bootstrap-Datepicker ermöglichen
+Zuzugsdatum
+  eCH-0194:arrivalDate
+  Date
+  input text (ISO-DateTime-Format, Optional)
+  Auswahl des Datums über Bootstrap-Datepicker ermöglichen; Das Zuzugsdatum soll nur auswählbar sein, wenn der Benutzer eine Checkbox "Abweichendes Zuzugsdatum" anhakt</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_1j0inpb</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_04fd0dv</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="WohnverhaeltnisErfassen" name="Wohnverhältnis erfassen">
+      <bpmn:documentation>Wohnverhältnis
+  eCH-0185:housingSituationType
+ String
+  select (1=Eigentümer, 2=Mieter, 3=Untermieter, Pflicht)
+
+Panel "Angaben zum Vermieter" mit folgenden Feldern soll nur angezeigt werden, wenn housingSituationType={2,3}:
+
+Vorname Nachname oder Firmenname  (Achtung bei diesen und weiteren Attributen, die es sowohl bei Wegzug als auch Zuzug gibt und beim Wohnverhältnis: Es wurde an die eCH-Bezeichnung jeweils noch HousingSituation angehängt)
+  eCH-0185:nameHousingSituation
+  String
+  input text (max. 100 Zeichen, Pflicht)
+
+Strasse
+  eCH-0010:streetHousingSituation
+  String
+  input text (max. 60 Zeichen, Pflicht)
+Hausnummer (optional)
+  eCH-0010:houseNumberHousingSituation
+  String
+  input text (max. 12 Zeichen)
+PLZ
+  eCH-0010:swissZipCodeHousingSituation
+  Integer
+  input number (0-9999, Pflicht)
+Ort
+  eCH-0010:townHousingSituation
+  String
+  input text (max. 40 Zeichen, Pflicht)</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_04fd0dv</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0gaq5kd</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:startEvent id="ZuzugsInformationenErfolgreichGeprueft" name="Zuzugs-Informationen erfolgreich geprüft">
+      <bpmn:documentation>Dieses Prozesstartereignis wird aufgerufen vom Prozess 'Umzugsmeldung erfassen und bezahlen' und ist nicht gedacht, um unabhängig davon (z.B. aus der Tasklist) aufgerufen zu werden.</bpmn:documentation>
+      <bpmn:outgoing>SequenceFlow_1j0inpb</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0nvmazi" name="Umzugsart?">
+      <bpmn:incoming>SequenceFlow_0gaq5kd</bpmn:incoming>
+      <bpmn:outgoing>WegzugZuzug</bpmn:outgoing>
+      <bpmn:outgoing>Umzug</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_0gaq5kd" sourceRef="WohnverhaeltnisErfassen" targetRef="ExclusiveGateway_0nvmazi" />
+    <bpmn:sequenceFlow id="SequenceFlow_04fd0dv" sourceRef="UmzugsdatenErfassen" targetRef="WohnverhaeltnisErfassen" />
+    <bpmn:sequenceFlow id="SequenceFlow_1j0inpb" sourceRef="ZuzugsInformationenErfolgreichGeprueft" targetRef="UmzugsdatenErfassen" />
+    <bpmn:sequenceFlow id="Umzug" name="Umzug" sourceRef="ExclusiveGateway_0nvmazi" targetRef="ExclusiveGateway_0hwy0a5">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${municipalityIdMoveOut == municipalityIdMoveIn}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="WegzugZuzug" name="Wegzug/&#10;Zuzug&#10;" sourceRef="ExclusiveGateway_0nvmazi" targetRef="ExclusiveGateway_0u7sxyf">
+      <bpmn:documentation>Die Grundversicherung ist nur zu prüfen, wenn es sich um einen Zuzug-Wegzug handelt</bpmn:documentation>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${municipalityIdMoveOut != municipalityIdMoveIn}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0hkwozz" name="Prüfen?">
+      <bpmn:incoming>SequenceFlow_13c4q3d</bpmn:incoming>
+      <bpmn:outgoing>PruefenJa</bpmn:outgoing>
+      <bpmn:outgoing>PruefenNein</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_1k9fmii">
+      <bpmn:incoming>PruefenNein</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0unz7dw</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1cv2stz</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0u7sxyf">
+      <bpmn:incoming>SequenceFlow_104azdr</bpmn:incoming>
+      <bpmn:incoming>WegzugZuzug</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_14qf1vf</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0vwu5q9" name="Prüfergebnis?">
+      <bpmn:incoming>SequenceFlow_1pfbest</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0unz7dw</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_104azdr</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_14qf1vf" sourceRef="ExclusiveGateway_0u7sxyf" targetRef="VersicherungsKartennummernErfassen" />
+    <bpmn:sequenceFlow id="SequenceFlow_13c4q3d" sourceRef="VersicherungsKartennummernErfassen" targetRef="ExclusiveGateway_0hkwozz" />
+    <bpmn:sequenceFlow id="PruefenJa" name="ja" sourceRef="ExclusiveGateway_0hkwozz" targetRef="GrundversicherungPruefen">
+      <bpmn:documentation>Im Normalfall soll die Prüfung durchgeführt werden.</bpmn:documentation>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${checkBaseInsurance}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_1pfbest" sourceRef="GrundversicherungPruefen" targetRef="ExclusiveGateway_0vwu5q9" />
+    <bpmn:sequenceFlow id="PruefenNein" name="nein" sourceRef="ExclusiveGateway_0hkwozz" targetRef="ExclusiveGateway_1k9fmii">
+      <bpmn:documentation>Wenn checkBaseInsurance im UserTask auf falsch gesetzt wurde, dann soll die Prüfung übersprungen werden. Das ist der Fall, wenn der Benutzer dieselbe Nummer beim zweiten Durchlauf eingegeben hat.</bpmn:documentation>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!checkBaseInsurance}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_0unz7dw" name="positiv" sourceRef="ExclusiveGateway_0vwu5q9" targetRef="ExclusiveGateway_1k9fmii">
+      <bpmn:documentation>Die Condition muss noch angepasst werden, wenn sie sich innerhalb eines Multi-Instance-Subprocess ist.</bpmn:documentation>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${checkBaseInsuranceResult == "Yes"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_104azdr" name="negativ" sourceRef="ExclusiveGateway_0vwu5q9" targetRef="ExclusiveGateway_0u7sxyf">
+      <bpmn:documentation>Die Condition muss noch angepasst werden, wenn sie sich innerhalb eines Multi-Instance-Subprocess ist.</bpmn:documentation>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${checkBaseInsuranceResult != "Yes"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_1cv2stz" sourceRef="ExclusiveGateway_1k9fmii" targetRef="ExclusiveGateway_0hwy0a5" />
+    <bpmn:endEvent id="WeitereAngabenErfolgreichErfasst" name="Weitere Angaben erfolgreich erfasst">
+      <bpmn:incoming>SequenceFlow_1hy3e56</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0hwy0a5">
+      <bpmn:incoming>Umzug</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1cv2stz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1pmjdyn</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_1pmjdyn" sourceRef="ExclusiveGateway_0hwy0a5" targetRef="KontaktangabenErfassen" />
+    <bpmn:sequenceFlow id="SequenceFlow_1hy3e56" sourceRef="KontaktangabenErfassen" targetRef="WeitereAngabenErfolgreichErfasst" />
+    <bpmn:task id="VersicherungsKartennummernErfassen" name="Versicherungs-Kartennummern erfassen">
+      <bpmn:documentation>Folgenden Warning-Alert anzeigen, falls die Antwort des VeKa-Center-Auskunftsdienstes (checkBaseInsuranceResult) 'No' oder 'Unknown' ist.
+"Die Grundversicherungspflicht für diese Person konnte nicht erfolgreich geprüft werden. Details:   
+
+{{person.checkBaseInsuranceResultDetails}}       
+
+Prüfen Sie bitte nochmals, ob Sie die Nummer richtig erfasst haben.        
+
+Falls Sie korrekt ist, können Sie dieses Formular ohne Änderung erneut absenden. Der Prozess kann dennoch fortgesetzt werden, aber vermutlich müssen Sie auf der Zuzugsgemeinde persönlich vorbei gehen mit Ihrer Versichertenkarte        
+
+Falls Sie die Nummer falsch erfasst haben, geben Sie nun die korrekte Nummer ein und die Prüfung erfolgt dann erneut.
+
+
+Formularfeld:
+- label: Versichertenkartennummer für VORNAME NACHNAME*
+- typ number
+- Wert: baseInsuranceNumber
+- Pflicht-Attribut
+
+Skripte:
+- Nach dem Formular-Laden sollen die Variablen checkBaseInsurance, personList und loopCounter ausgelesen werden
+- Nach dem Auslesen soll die aktuelle Person (gemäss loopCounter) $scope.person zugewiesen werden. Zudem sind die Variablen $scope.baseInsuranceNumberOriginal und $scope.baseInsuranceNumber entsprechend aus $scope.person.baseInsuranceNumber auszulesen
+- Vor dem Absenden des Formulars ist zu prüfen, ob der Benutzer die baseInsuranceNumber geändert hat. Falls checkBaseInsurance falsch ist und der Benutzer etwas geändert hat, ist checkBaseInsurance auf Wahr zu setzen.</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_14qf1vf</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_13c4q3d</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="GrundversicherungPruefen" name="Grund-versicherung prüfen">
+      <bpmn:documentation>Grundversicherungsprüfung pro umziehender Person im Auskunftsdienst des VeKa-Centers
+
+Die Methode checkBaseInsurance des RESTful Web Services VeKa-Center-Auskunftsdienst (http://localhost:8070/vekaapi/checkbaseinsurance) wird synchron aufgerufen.
+
+Der Web Service wird konsumiert mit spring-web und jackson-databind (https://spring.io/guides/gs/consuming-rest/).
+
+Für den Request an den Web Service müssen aus person in der Prozessvariable die Eigenschaften baseInsuranceNumber, firstName, officialName und dateOfBirth in ein JSON-Body für den Request an die Methode checkBaseInsurance aufbereitet werden.
+
+In der Realität müsste man sich beim Service authentifizieren, was wir für den Prototypen weglassen.
+
+Die JSON-Response enthält ein VeKaResponse-Objekt mit zwei String-Variablen: checkBaseInsuranceResult, die positiv (Yes, Person ist grundversichert), negativ (No, Person ist nicht grundversichert) oder unklar (Unknown, die Prüfung konnte nicht durchgeführt werden. Einerseits sind nicht alle Versicherungen abfragbar (Bsp.: Helsana) oder die Versichertenkartennum-mer konnte nicht gefunden werden.) sein kann. checkBaseInsuranceResultDetails mit weiteren Erläuterungen.
+
+Diese Antwort wird in den gleich lautenden Eigenschaften des Person-Objekts übergeben.
+
+In einem End Listener wird die Variable checkBaseInsurance auf false gesetzt. Begründung siehe im Kommentar zum GrundversicherungPruefenStartEvent.</bpmn:documentation>
+      <bpmn:incoming>PruefenJa</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1pfbest</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="KontaktangabenErfassen" name="Kontaktangaben erfassen">
+      <bpmn:documentation>Telefonnummer
+  eCH-0185:phoneNumber
+  String
+  input text (10-20 Ziffern, Pflicht)
+E-Mailadresse
+  eCH-0185:emailAddress
+  String
+  input email (Pflicht)</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_1pmjdyn</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1hy3e56</bpmn:outgoing>
+    </bpmn:task>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1p945p5">
+      <bpmndi:BPMNShape id="Participant_0wtqtyr_di" bpmnElement="WeitereAngabenErfassenParticipant">
+        <dc:Bounds x="2" y="1" width="1493" height="269" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="ZuzugsInformationenErfolgreichGeprueft">
+        <dc:Bounds x="77" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="50" y="145" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1j0inpb_di" bpmnElement="SequenceFlow_1j0inpb">
+        <di:waypoint x="113" y="120" />
+        <di:waypoint x="153" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0gaq5kd_di" bpmnElement="SequenceFlow_0gaq5kd">
+        <di:waypoint x="396" y="120" />
+        <di:waypoint x="426" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_04fd0dv_di" bpmnElement="SequenceFlow_04fd0dv">
+        <di:waypoint x="253" y="120" />
+        <di:waypoint x="296" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_17eotjq_di" bpmnElement="WeitereAngabenErfolgreichErfasst">
+        <dc:Bounds x="1413" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1387" y="145" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1hy3e56_di" bpmnElement="SequenceFlow_1hy3e56">
+        <di:waypoint x="1370" y="120" />
+        <di:waypoint x="1413" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_02v5zqt_di" bpmnElement="VeKaCenterAuskunftsdienstParticipant" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="760" y="354" width="300" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="MessageFlow_0gi7zs3_di" bpmnElement="VersichertenDaten" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <di:waypoint x="895" y="160" />
+        <di:waypoint x="895" y="354" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="820" y="301" width="65" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_0yggjzl_di" bpmnElement="Pruefergebnis" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <di:waypoint x="934" y="354" />
+        <di:waypoint x="934" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="950" y="312" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_13c4q3d_di" bpmnElement="SequenceFlow_13c4q3d">
+        <di:waypoint x="727" y="120" />
+        <di:waypoint x="759" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1pfbest_di" bpmnElement="SequenceFlow_1pfbest">
+        <di:waypoint x="960" y="120" />
+        <di:waypoint x="993" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0hkwozz_di" bpmnElement="ExclusiveGateway_0hkwozz" isMarkerVisible="true">
+        <dc:Bounds x="759" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="764" y="153" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1dmzowa_di" bpmnElement="PruefenJa">
+        <di:waypoint x="809" y="120" />
+        <di:waypoint x="860" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="829" y="100" width="8" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1k9fmii_di" bpmnElement="ExclusiveGateway_1k9fmii" isMarkerVisible="true">
+        <dc:Bounds x="1096" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0s8ozoi_di" bpmnElement="PruefenNein">
+        <di:waypoint x="784" y="95" />
+        <di:waypoint x="784" y="52" />
+        <di:waypoint x="1121" y="52" />
+        <di:waypoint x="1121" y="95" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="792" y="72" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0u7sxyf_di" bpmnElement="ExclusiveGateway_0u7sxyf" isMarkerVisible="true">
+        <dc:Bounds x="545" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_14qf1vf_di" bpmnElement="SequenceFlow_14qf1vf">
+        <di:waypoint x="595" y="120" />
+        <di:waypoint x="627" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0vwu5q9_di" bpmnElement="ExclusiveGateway_0vwu5q9" isMarkerVisible="true">
+        <dc:Bounds x="993" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="983" y="71" width="69" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0unz7dw_di" bpmnElement="SequenceFlow_0unz7dw" bioc:stroke="#E53935" bioc:fill="#FFCDD2">
+        <di:waypoint x="1043" y="120" />
+        <di:waypoint x="1096" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1046" y="102" width="32" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_104azdr_di" bpmnElement="SequenceFlow_104azdr" bioc:stroke="#E53935" bioc:fill="#FFCDD2">
+        <di:waypoint x="1018" y="145" />
+        <di:waypoint x="1018" y="190" />
+        <di:waypoint x="570" y="190" />
+        <di:waypoint x="570" y="145" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1026" y="150" width="36" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0nvmazi_di" bpmnElement="ExclusiveGateway_0nvmazi" isMarkerVisible="true">
+        <dc:Bounds x="426" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="422" y="76" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_01vc064_di" bpmnElement="WegzugZuzug">
+        <di:waypoint x="476" y="120" />
+        <di:waypoint x="545" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="491" y="87" width="44" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0hwy0a5_di" bpmnElement="ExclusiveGateway_0hwy0a5" isMarkerVisible="true">
+        <dc:Bounds x="1190" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1pmjdyn_di" bpmnElement="SequenceFlow_1pmjdyn">
+        <di:waypoint x="1240" y="120" />
+        <di:waypoint x="1270" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1d2i1uk_di" bpmnElement="Umzug">
+        <di:waypoint x="451" y="145" />
+        <di:waypoint x="451" y="245" />
+        <di:waypoint x="1215" y="245" />
+        <di:waypoint x="1215" y="145" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="458" y="154" width="35" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_09ibpuj_di" bpmnElement="UmzugsdatenErfassen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="153" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_12yomkp_di" bpmnElement="WohnverhaeltnisErfassen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="296" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1cv2stz_di" bpmnElement="SequenceFlow_1cv2stz">
+        <di:waypoint x="1146" y="120" />
+        <di:waypoint x="1190" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_0owxwe5_di" bpmnElement="VersicherungsKartennummernErfassen" bioc:stroke="#E53935" bioc:fill="#FFCDD2">
+        <dc:Bounds x="627" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_16zaspe_di" bpmnElement="GrundversicherungPruefen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="860" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_0vx5o8i_di" bpmnElement="KontaktangabenErfassen" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="1270" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
