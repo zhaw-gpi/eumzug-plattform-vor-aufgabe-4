@@ -50,7 +50,7 @@ Ein End-Listener ruft die JavaDelegate-Klasse 'GetMunicipalityListDelegate' auf 
     <bpmn:sequenceFlow id="SequenceFlow_09b5q9r" sourceRef="IdentifikationsmerkmaleErfassen" targetRef="PersonenidentifikatorGenerieren" />
     <bpmn:sequenceFlow id="SequenceFlow_0bbx1ag" sourceRef="PersonenidentifikatorGenerieren" targetRef="PersonIdentifizieren" />
     <bpmn:sequenceFlow id="SequenceFlow_1nn0lr5" sourceRef="PersonIdentifizieren" targetRef="ExclusiveGateway_1kbj40j" />
-    <bpmn:sequenceFlow id="PersonNichtGefunden" name="Person nicht gefunden" sourceRef="ExclusiveGateway_1kbj40j" targetRef="KorrekturbedarfMitteilen">
+    <bpmn:sequenceFlow id="PersonNichtGefunden" name="Person nicht gefunden" sourceRef="ExclusiveGateway_1kbj40j" targetRef="ExclusiveGateway_0if2rac">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!personKnown}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="NichtFuerEumzugBerechtigt" name="Nicht für eUmzug berechtigt" sourceRef="ExclusiveGateway_1kbj40j" targetRef="ExclusiveGateway_0620p1a">
@@ -71,7 +71,7 @@ Ein End-Listener ruft die JavaDelegate-Klasse 'GetMunicipalityListDelegate' auf 
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!revisionDesired}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="SequenceFlow_0d6anna" sourceRef="ExclusiveGateway_0620p1a" targetRef="AnSchalterVerwiesenWerden" />
-    <bpmn:sequenceFlow id="SequenceFlow_1jlptqu" sourceRef="AnSchalterVerwiesenWerden" targetRef="WegenNegativerPersonenIdentifikationAbgebrochen" />
+    <bpmn:sequenceFlow id="SequenceFlow_1jlptqu" sourceRef="AnSchalterVerwiesenWerden" targetRef="NegativePersonenidentifikationPersistieren" />
     <bpmn:sequenceFlow id="SequenceFlow_0n90szt" sourceRef="ExclusiveGateway_0cjsigp" targetRef="PersonenidentifikationErfolgreichAbgeschlossen" />
     <bpmn:sequenceFlow id="KorrekturGewuenscht" name="ja" sourceRef="ExclusiveGateway_02eif3q" targetRef="ExclusiveGateway_1nsjb6v">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${revisionDesired}</bpmn:conditionExpression>
@@ -92,18 +92,8 @@ xyz soll durch den Namen der Wegzugsgemeinde ersetzt sein.</bpmn:documentation>
       <bpmn:incoming>KorrekturNichtGewuenscht</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_0d6anna</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:endEvent id="WegenNegativerPersonenIdentifikationAbgebrochen" name="Wegen negativer Personen-identifikation abgebrochen">
-      <bpmn:documentation>In einem Start-Listener soll eine neue Prozessvariable status mit dem Wert "Wegen negativer Personenidentifikation abgebrochen" gesetzt werden.</bpmn:documentation>
-      <bpmn:extensionElements>
-        <camunda:executionListener event="start">
-          <camunda:script scriptFormat="JavaScript">execution.setVariable("status", "Wegen negativer Personenidentifikation abgebrochen");</camunda:script>
-        </camunda:executionListener>
-      </bpmn:extensionElements>
-      <bpmn:incoming>SequenceFlow_1jlptqu</bpmn:incoming>
-      <bpmn:errorEventDefinition id="ErrorEventDefinition_14fbx4x" errorRef="Error_0j8yidj" />
-    </bpmn:endEvent>
     <bpmn:task id="KorrekturbedarfMitteilen" name="Korrekturbedarf mitteilen">
-      <bpmn:documentation>In diesem Schritt soll zunächst das negative Prüfergebnis als Fehlermeldung (Bootstrap alert-warning) angezeigt werden.
+      <bpmn:documentation>In diesem Schritt soll zunächst das negative Prüfergebnis oder NegativeReportTextGerman als Fehlermeldung (Bootstrap alert-warning) angezeigt werden.
 
 Anschliessend sollen vn (sofern vorhanden), firstName, officialName, sex (in ausgeschriebener Form) und dateOfBirth in einer Tabelle angezeigt werden.
 
@@ -113,7 +103,7 @@ Und schliesslich soll die Frage gestellt werden, ob er die Personalien überarbe
   revisionDesired
   Boolean
   input checkbox</bpmn:documentation>
-      <bpmn:incoming>PersonNichtGefunden</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_074g35d</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1fttpqx</bpmn:outgoing>
     </bpmn:task>
     <bpmn:exclusiveGateway id="ExclusiveGateway_02eif3q" name="Korrektur gewünscht?">
@@ -180,12 +170,44 @@ Die Response ist ebenfalls vom Typ DeliveryType und enthält den Header sowie en
       <bpmn:incoming>SequenceFlow_0bbx1ag</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1nn0lr5</bpmn:outgoing>
     </bpmn:task>
+    <bpmn:boundaryEvent id="NegativeReportErhalten" name="Negative Report erhalten" attachedToRef="PersonIdentifizieren">
+      <bpmn:documentation>Der geworfene NegativeReportErhalten-Fehler wird abgefangen. Die Fehlermeldung selbst wird in der Prozessvariable NegativeReportTextGerman gespeichert.</bpmn:documentation>
+      <bpmn:outgoing>SequenceFlow_1f10k1z</bpmn:outgoing>
+      <bpmn:errorEventDefinition errorRef="Error_1kxh83b" camunda:errorMessageVariable="NegativeReportTextGerman" />
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0if2rac">
+      <bpmn:incoming>PersonNichtGefunden</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1f10k1z</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_074g35d</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_074g35d" sourceRef="ExclusiveGateway_0if2rac" targetRef="KorrekturbedarfMitteilen" />
+    <bpmn:sequenceFlow id="SequenceFlow_1f10k1z" sourceRef="NegativeReportErhalten" targetRef="ExclusiveGateway_0if2rac" />
+    <bpmn:serviceTask id="NegativePersonenidentifikationPersistieren" name="Negative Personen-identifikation persistieren" camunda:delegateExpression="#{persistUserEntriesAndStatusAdapter}">
+      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+
+Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex).
+
+In einem Input-Parameter wird die Prozessvariable 'status' gesetzt mit "Wegen negativer Personenidentifikation abgebrochen".</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="status">Wegen negativer Personenidentifikation abgebrochen</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1jlptqu</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0xvndsx</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0xvndsx" sourceRef="NegativePersonenidentifikationPersistieren" targetRef="WegenNegativerPersonenIdentifikationAbgebrochen" />
+    <bpmn:endEvent id="WegenNegativerPersonenIdentifikationAbgebrochen" name="Wegen negativer Personen-identifikation abgebrochen">
+      <bpmn:incoming>SequenceFlow_0xvndsx</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_14fbx4x" errorRef="Error_0j8yidj" />
+    </bpmn:endEvent>
   </bpmn:process>
   <bpmn:error id="Error_0j8yidj" name="ErrorPersonErfassenUndIdentifizieren" errorCode="WegenNegativerPersonenIdentifikationAbgebrochen" />
+  <bpmn:error id="Error_1kxh83b" name="ErrorPersonIdentifizieren" errorCode="NegativeReportErhalten" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_06rojpi">
       <bpmndi:BPMNShape id="Participant_1hkfvkb_di" bpmnElement="PersonErfassenUndIdentifizierenParticipant">
-        <dc:Bounds x="-1" y="117" width="1598" height="400" />
+        <dc:Bounds x="-1" y="117" width="1755" height="397" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="StartEvent_14lr8fl_di" bpmnElement="UmzugsmeldungGestartet" bioc:stroke="#E53935" bioc:fill="#FFCDD2">
         <dc:Bounds x="72" y="246" width="36" height="36" />
@@ -226,9 +248,9 @@ Die Response ist ebenfalls vom Typ DeliveryType und enthält den Header sowie en
         <dc:Bounds x="1263" y="394" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_0j730q8_di" bpmnElement="WegenNegativerPersonenIdentifikationAbgebrochen">
-        <dc:Bounds x="1516" y="401" width="36" height="36" />
+        <dc:Bounds x="1673" y="401" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1493" y="441" width="84" height="53" />
+          <dc:Bounds x="1650" y="441" width="84" height="53" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1nn0lr5_di" bpmnElement="SequenceFlow_1nn0lr5">
@@ -237,10 +259,9 @@ Die Response ist ebenfalls vom Typ DeliveryType und enthält den Header sowie en
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_00h8w1e_di" bpmnElement="PersonNichtGefunden">
         <di:waypoint x="727" y="289" />
-        <di:waypoint x="727" y="419" />
-        <di:waypoint x="816" y="419" />
+        <di:waypoint x="727" y="394" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="733" y="384" width="63" height="27" />
+          <dc:Bounds x="737" y="299" width="63" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_19kndj1_di" bpmnElement="NichtFuerEumzugBerechtigt">
@@ -296,7 +317,7 @@ Die Response ist ebenfalls vom Typ DeliveryType und enthält den Header sowie en
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_1jlptqu_di" bpmnElement="SequenceFlow_1jlptqu">
         <di:waypoint x="1468" y="419" />
-        <di:waypoint x="1516" y="419" />
+        <di:waypoint x="1518" y="419" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ExclusiveGateway_1nsjb6v_di" bpmnElement="ExclusiveGateway_1nsjb6v" isMarkerVisible="true">
         <dc:Bounds x="152" y="239" width="50" height="50" />
@@ -363,6 +384,31 @@ Die Response ist ebenfalls vom Typ DeliveryType und enthält den Header sowie en
       <bpmndi:BPMNShape id="Task_1jhwry3_di" bpmnElement="PersonIdentifizieren" bioc:stroke="#E53935" bioc:fill="#FFCDD2">
         <dc:Bounds x="546" y="224" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_0fx9791_di" bpmnElement="NegativeReportErhalten">
+        <dc:Bounds x="554" y="286" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="593" y="316" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0if2rac_di" bpmnElement="ExclusiveGateway_0if2rac" isMarkerVisible="true">
+        <dc:Bounds x="702" y="394" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_074g35d_di" bpmnElement="SequenceFlow_074g35d">
+        <di:waypoint x="752" y="419" />
+        <di:waypoint x="816" y="419" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1f10k1z_di" bpmnElement="SequenceFlow_1f10k1z">
+        <di:waypoint x="572" y="322" />
+        <di:waypoint x="572" y="419" />
+        <di:waypoint x="702" y="419" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1p3jr1y_di" bpmnElement="NegativePersonenidentifikationPersistieren" bioc:stroke="#43A047" bioc:fill="#C8E6C9">
+        <dc:Bounds x="1518" y="379" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0xvndsx_di" bpmnElement="SequenceFlow_0xvndsx">
+        <di:waypoint x="1618" y="419" />
+        <di:waypoint x="1673" y="419" />
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>
