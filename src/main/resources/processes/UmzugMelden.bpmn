@@ -80,6 +80,7 @@ Wie genau eine Gemeinde mit der erhaltenen Meldung umgeht, ist je nach Gemeinde 
           <camunda:outputParameter name="allDataCorrect">${true}</camunda:outputParameter>
           <camunda:outputParameter name="feeMap">dummy</camunda:outputParameter>
           <camunda:outputParameter name="relativesExist">${true}</camunda:outputParameter>
+          <camunda:outputParameter name="relocationAccepted">${true}</camunda:outputParameter>
         </camunda:inputOutput>
       </extensionElements>
       <incoming>SequenceFlow_0ypg6cw</incoming>
@@ -109,8 +110,12 @@ Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden 
     </task>
     <sequenceFlow id="SequenceFlow_1hdylfx" sourceRef="ErfolgreichenAbschlussPersistieren" targetRef="UmzugsmeldungErfolgreichAbgeschlossen" />
     <sequenceFlow id="SequenceFlow_1x0qckx" sourceRef="ErfolgreichenAbschlussMitteilen" targetRef="ErfolgreichenAbschlussPersistieren" />
-    <sequenceFlow id="SequenceFlow_19zjyai" name="ja" sourceRef="ExclusiveGateway_11y17tq" targetRef="ErfolgreichenAbschlussMitteilen" />
-    <sequenceFlow id="SequenceFlow_0apyl62" name="nein" sourceRef="ExclusiveGateway_11y17tq" targetRef="AblehnungMitteilen" />
+    <sequenceFlow id="SequenceFlow_19zjyai" name="ja" sourceRef="ExclusiveGateway_11y17tq" targetRef="ErfolgreichenAbschlussMitteilen">
+      <conditionExpression xsi:type="tFormalExpression">${relocationAccepted}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="SequenceFlow_0apyl62" name="nein" sourceRef="ExclusiveGateway_11y17tq" targetRef="AblehnungMitteilen">
+      <conditionExpression xsi:type="tFormalExpression">${!relocationAccepted}</conditionExpression>
+    </sequenceFlow>
     <exclusiveGateway id="ExclusiveGateway_11y17tq" name="Umzugsmeldung akzeptiert?">
       <incoming>SequenceFlow_1ptg35o</incoming>
       <outgoing>SequenceFlow_19zjyai</outgoing>
