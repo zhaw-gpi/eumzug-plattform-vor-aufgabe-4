@@ -6,9 +6,9 @@
     um 1 erhöhen, wenn etwas ändert. Die ersten zwei Ziffern entsprechen Spring 
     Boot-Versionsnummer -->
     <groupId>ch.zhaw.gpi</groupId>
-    <artifactId>eumzug-plattform-vor-aufgabe-4</artifactId>
-    <name>eUmzug Plattform (vor Aufgabe 4)</name>
-    <version>3.0.1</version>
+    <artifactId>eumzug-plattform-musterloesung-aufgabe-3</artifactId>
+    <name>eUmzug Plattform (Musterlösung Aufgabe 3)</name>
+    <version>3.0.2</version>
     
     <!-- Konfiguration des Maven-Projekts -->
     <properties>
