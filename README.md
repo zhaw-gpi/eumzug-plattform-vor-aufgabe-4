@@ -1,8 +1,8 @@
-# eUmzug-Plattform (vor Aufgabe 4) (eumzug-plattform-2018-vor-aufgabe-4)
+# eUmzug-Plattform (Musterlösung Aufgabe 3) (eumzug-plattform-musterloesung-aufgabe-3)
 
 > Autoren der Dokumentation: Björn Scheppler
 
-> Dokumentation letztmals aktualisiert: 26.9.2018
+> Dokumentation letztmals aktualisiert: 17.10.2018
 
 > TOC erstellt mit https://ecotrust-canada.github.io/markdown-toc/
 
@@ -10,7 +10,7 @@ In diesem Projekt ist eine mögliche Lösung für den [UmzugsmeldeProzess](https
 
 Die Lösung entstand im Rahmen des **Moduls Geschäftsprozesssintegration im Studiengang Wirtschaftsinformatik** an der ZHAW School of Management and Law.
 
-Dies ist das den Studierenden zur Verfügung gestellte Maven-Projekt für die Umzugsplattform als Ausgangslage, bevor sie Aufgabe 4 in Angriff nehmen.
+Dies ist das den Studierenden zur Verfügung gestellte Maven-Projekt für die Umzugsplattform als Ausgangslage, bevor sie Aufgabe 5 in Angriff nehmen.
 
 ## Inhaltsverzeichnis
   * [Inhaltsverzeichnis](#inhaltsverzeichnis)
