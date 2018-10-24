@@ -102,7 +102,7 @@ Wie genau eine Gemeinde mit der erhaltenen Meldung umgeht, ist je nach Gemeinde 
       <outgoing>SequenceFlow_1x0qckx</outgoing>
     </task>
     <task id="ErfolgreichenAbschlussPersistieren" name="Erfolgreichen Abschluss persistieren">
-      <documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+      <documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex). In einem Input-Parameter wird die Prozessvariable 'status' gesetzt mit "Erfolgreicher Abschluss des eUmzugsmeldung".</documentation>
       <incoming>SequenceFlow_1x0qckx</incoming>
@@ -132,7 +132,7 @@ Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden 
       <outgoing>SequenceFlow_0g89g9f</outgoing>
     </task>
     <task id="AblehnungPersistieren" name="Ablehnung persistieren">
-      <documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+      <documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex). In einem Input-Parameter wird die Prozessvariable 'status' gesetzt mit "Fehlgeschlagen wegen Ablehnung einer Einwohnergemeinde".</documentation>
       <incoming>SequenceFlow_0g89g9f</incoming>
@@ -159,7 +159,7 @@ Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden 
       <outgoing>SequenceFlow_0gj0vfg</outgoing>
     </task>
     <task id="UeberschreitenDerAntwortfristPersistieren" name="Überschreiten der Antwortfrist persistieren">
-      <documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+      <documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex). In einem Input-Parameter wird die Prozessvariable 'status' gesetzt mit "Fehlgeschlagen wegen Zeitüberschreitung bei der Kommunikation mit den Einwohnerkontrollsystemen".</documentation>
       <incoming>SequenceFlow_0gj0vfg</incoming>

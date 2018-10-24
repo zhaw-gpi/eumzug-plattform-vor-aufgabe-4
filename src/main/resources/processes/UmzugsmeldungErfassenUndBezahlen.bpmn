@@ -19,7 +19,7 @@
       <bpmn:errorEventDefinition id="ErrorEventDefinition_1c43f0q" errorRef="Error_0fmfamk" />
     </bpmn:endEvent>
     <bpmn:task id="AbbruchWegenZeitueberschreitungPersistieren" name="Abbruch wegen Zeitüberschreitung persistieren">
-      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex), ebenfalls der Status (status).</bpmn:documentation>
       <bpmn:incoming>PersonIdentifikationErfasst</bpmn:incoming>
@@ -148,7 +148,10 @@ Theoretisch: Dem Prozess wird der BusinessKey, die BusinessCaseId und der Benutz
 
 Zunächst wird geprüft, ob es sich um Wegzug/Zuzug oder Umzug handelt. Je nachdem werden dann über ein JPA-Repository eine oder zwei Gemeinde-Objekte aus der Datenbank geladen.
 
-Für jedes Objekt wird die relevante Gebühr (Zuzug, Wegzug oder Umzug) ausgelesen und einer HashMap hinzugefügt inklusive Angabe, um welche Art von Gebühr es sich handelt (z.B. "Wegzugsgebühr"). Falls mindestens eine Gebühr anfällt, wird die HashMap der Prozessvariable feeMap zugewiesen, ansonsten wird dieser Variable der Wert null zugewiesen.</bpmn:documentation>
+Für jedes Objekt wird die relevante Gebühr (Zuzug, Wegzug oder Umzug) ausgelesen und einer HashMap hinzugefügt inklusive Angabe, um welche Art von Gebühr es sich handelt (z.B. "Wegzugsgebühr"). Falls mindestens eine Gebühr anfällt, wird die HashMap der Prozessvariable feeMap zugewiesen, ansonsten wird dieser Variable der Wert null zugewiesen.
+
+Zudem wird die Prozessvariable feesTotal auf den Wert der Gebühren insgesamt gesetzt, also 0, falls keine Gebühren anfallen und ansonsten die Summe aller Gebühren.
+</bpmn:documentation>
         <bpmn:incoming>SequenceFlow_05prxas</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_12mko98</bpmn:outgoing>
       </bpmn:task>
@@ -203,7 +206,7 @@ Zuunterst zwei Checkboxes:
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!feesAccepted}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:task id="GebuehrenNichtAkzeptiertPersistieren" name="Gebühren nicht akzeptiert persistieren">
-        <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+        <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex). In einem Input-Parameter wird die Prozessvariable 'status' gesetzt mit "Fehlgeschlagen wegen nicht akzeptierter Gebühren".</bpmn:documentation>
         <bpmn:incoming>Abbrechen</bpmn:incoming>
@@ -292,7 +295,7 @@ Je nach Antwortzeiten der Gemeinden werden Sie dann in den nächsten Stunden ode
       <bpmn:outgoing>SequenceFlow_1y8ukhh</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:task id="FehlgeschlageneZahlungPersistieren" name="Fehlgeschlagene Zahlung persistieren">
-      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex), ebenfalls der Status (status).</bpmn:documentation>
       <bpmn:incoming>SequenceFlow_0zi28s4</bpmn:incoming>
@@ -310,7 +313,7 @@ Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden 
       <bpmn:outgoing>SequenceFlow_12n4w31</bpmn:outgoing>
     </bpmn:task>
     <bpmn:task id="ErfolgreicheUmzugsmeldungErfassungPersistieren" name="Erfolgreiche Umzugsmeldung-Erfassung persistieren">
-      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren.
+      <bpmn:documentation>Aufruf der JavaDelegate-implementierenden Klasse 'PersistUserEntriesAndStatusDelegate', um Personenidentifikations- und Status-Angaben zu persistieren. Erstere sollen nur gespeichert werden, wenn die entsprechende Person nicht bereits in der Datenbank existiert. Letztere sollen in der TransactionLog-Entität gespeichert werden.
 
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex).
 
