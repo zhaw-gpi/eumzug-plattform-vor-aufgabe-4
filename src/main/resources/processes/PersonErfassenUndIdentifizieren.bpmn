@@ -193,11 +193,6 @@ Die Response ist ebenfalls vom Typ DeliveryType und enthält den Header sowie en
 Die Personenidentifikations-Angaben sind bereits als Prozessvariablen vorhanden (localPersonId, vn, firstName, officialName, dateOfBirth und sex).
 
 In einem Input-Parameter wird die Prozessvariable 'status' gesetzt mit "Wegen negativer Personenidentifikation abgebrochen".</bpmn:documentation>
-      <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="status">Wegen negativer Personenidentifikation abgebrochen</camunda:inputParameter>
-        </camunda:inputOutput>
-      </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_1jlptqu</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_0xvndsx</bpmn:outgoing>
     </bpmn:task>
